@@ -13,7 +13,7 @@ st.markdown("""
 <style>
 .pride-button-container {
     position: fixed;
-    top: 20px;
+    top: 100px;
     right: 20px;
     z-index: 999;
 }
