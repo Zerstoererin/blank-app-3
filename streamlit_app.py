@@ -36,8 +36,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Terminal 1 - Hellpink
+st.markdown('<h3 style="margin-top: 0;">Standartabweichung des Blindwerts bestimmen</h3>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="terminal-box terminal-pink">Formel 1: Nachweisgrenze</div>',
+    '<div class="terminal-box terminal-pink"></div>',
     unsafe_allow_html=True
 )
 
