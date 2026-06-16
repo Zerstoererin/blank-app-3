@@ -6,6 +6,9 @@ st.set_page_config(layout="wide")
 if "show_pride_message" not in st.session_state:
     st.session_state.show_pride_message = False
 
+# Placeholder für die Pride Message
+pride_message_placeholder = st.empty()
+
 st.title("Nachweisgrenze Berechnung")
 
 # Custom CSS für die Terminals und Pride Button
@@ -49,11 +52,11 @@ st.markdown("""
 }
 
 .pride-message {
-    position: fixed;
+    position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0,0,0,0.9);
     color: white;
     padding: 30px 60px;
     border-radius: 20px;
@@ -61,6 +64,9 @@ st.markdown("""
     font-weight: bold;
     z-index: 1000;
     animation: fadeInOut 2s ease-in-out;
+    width: 100%;
+    text-align: center;
+    pointer-events: none;
 }
 
 @keyframes fadeInOut {
@@ -109,7 +115,14 @@ function showPrideMessage() {
     const msgDiv = document.createElement('div');
     msgDiv.className = 'pride-message';
     msgDiv.textContent = 'Happy Pride';
-    document.body.appendChild(msgDiv);
+    
+    // Zur Hauptseite hinzufügen
+    const mainContent = document.querySelector('[data-testid="stMainBlockContainer"]');
+    if (mainContent) {
+        mainContent.appendChild(msgDiv);
+    } else {
+        document.body.appendChild(msgDiv);
+    }
     
     setTimeout(() => {
         msgDiv.remove();
