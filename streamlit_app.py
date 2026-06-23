@@ -3,45 +3,68 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 st.markdown(
-    '<div style="text-align:center; margin-top:0.5rem; margin-bottom:1rem; font-size:4rem; color:#000000; font-weight:bold;">
-        <span title="Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann." style="cursor:help; margin-right:0.5rem;">★</span>
+    '''<div style="text-align:center; margin-top:0.5rem; margin-bottom:1rem; font-size:4rem; color:#000000; font-weight:bold;">
+        <span class="tooltip-container" style="margin-right:0.5rem;">★
+            <span class="tooltip-text">Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann.<br><a href="https://de.wikipedia.org/wiki/Nachweisgrenze" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration:underline;">Quelle</a></span>
+        </span>
         LOD Rechner
-        <span title="Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann." style="cursor:help; margin-left:0.5rem;">★</span>
-    </div>',
+        <span class="tooltip-container" style="margin-left:0.5rem;">★
+            <span class="tooltip-text">Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann.<br><a href="https://de.wikipedia.org/wiki/Nachweisgrenze" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration:underline;">Quelle</a></span>
+        </span>
+    </div>''',
     unsafe_allow_html=True
 )
 
 st.markdown('## Daten hochladen', unsafe_allow_html=True)
-file_type = st.selectbox(
-    'Wähle den Dateityp deiner Daten aus',
-    ['CSV', 'XLSX', 'TXT']
-)
-uploaded_file = st.file_uploader(
-    'Eigene Daten hochladen',
-    type=['csv', 'xlsx', 'txt'],
-    help='Unterstützte Dateitypen: CSV, XLSX, TXT'
-)
+
+col1, col2 = st.columns(2)
+
+with col1:
+    file_type = st.selectbox(
+        'Dateityp wählen',
+        ['CSV', 'XLSX', 'TXT']
+    )
+
+with col2:
+    uploaded_file = st.file_uploader(
+        'Datei hochladen',
+        type=['csv', 'xlsx', 'txt']
+    )
 
 if uploaded_file is not None:
-    st.success(f'Geladene Datei: {uploaded_file.name} ({file_type})')
-    st.info('Die Datei wird in den drei Schritten verarbeitet. Zwischenergebnisse erscheinen in den Terminalfeldern.')
+    st.success(f'✓ {uploaded_file.name} ({file_type})')
     terminal1_content = (
-        'Standartabweichung des Blindwerts bestimmen<br>'
-        '<span style="font-size:0.85rem; color:#222;">Schritt 1: Daten werden eingelesen und vorbereitet...</span>'
+        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
+        '<div class="terminal-formula">$$s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: s_{blank} wird aus den Blindwertdaten berechnet.</div>'
     )
     terminal2_content = (
-        'Kalibriergerade bestimmen<br>'
-        '<span style="font-size:0.85rem; color:#222;">Schritt 2: Kalibriergerade wird aus den bereitgestellten Messwerten berechnet...</span>'
+        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
+        '<div class="terminal-formula">$$m = \frac{n\sum_{i=1}^{n} x_i y_i - \sum_{i=1}^{n} x_i \sum_{i=1}^{n} y_i}{n\sum_{i=1}^{n} x_i^2 - (\sum_{i=1}^{n} x_i)^2}\\[6pt]c = \bar{y} - m\bar{x}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: Steigung m und Achsenabschnitt c werden ermittelt.</div>'
     )
     terminal3_content = (
-        'LOD Berechnen<br>'
-        '<span style="font-size:0.85rem; color:#222;">Schritt 3: LOD wird anhand der berechneten Werte bestimmt...</span>'
+        '<div class="terminal-heading">LOD Berechnen</div>'
+        '<div class="terminal-formula">$$LOD = 3.3 \frac{s_{blank}}{m}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: LOD wird aus s_{blank} und m berechnet.</div>'
     )
 else:
     st.info('Bitte eine Datei hochladen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
-    terminal1_content = 'Standartabweichung des Blindwerts bestimmen'
-    terminal2_content = 'Kalibriergerade bestimmen'
-    terminal3_content = 'LOD Berechnen'
+    terminal1_content = (
+        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
+        '<div class="terminal-formula">$$s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
+    )
+    terminal2_content = (
+        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
+        '<div class="terminal-formula">$$m = \frac{n\sum_{i=1}^{n} x_i y_i - \sum_{i=1}^{n} x_i \sum_{i=1}^{n} y_i}{n\sum_{i=1}^{n} x_i^2 - (\sum_{i=1}^{n} x_i)^2}\\[6pt]c = \bar{y} - m\bar{x}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
+    )
+    terminal3_content = (
+        '<div class="terminal-heading">LOD Berechnen</div>'
+        '<div class="terminal-formula">$$LOD = 3.3 \frac{s_{blank}}{m}$$</div>'
+        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
+    )
 
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
@@ -82,7 +105,90 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
     border: 2px solid #4DA6FF;
     color: #333;
 }
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip-text {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 12px 15px;
+    position: absolute;
+    z-index: 1;
+    top: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 250px;
+    font-size: 1rem;
+    line-height: 1.4;
+    white-space: normal;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.tooltip-text::after {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent #333 transparent;
+}
+
+.tooltip-container:hover .tooltip-text {
+    visibility: visible;
+}
+
+.terminal-heading {
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 0.35rem;
+}
+
+.terminal-formula {
+    font-size: 1.1rem;
+    color: #222;
+    line-height: 1.5;
+    white-space: normal;
+    margin-bottom: 0.75rem;
+}
+
+.terminal-result-box {
+    background-color: rgba(255,255,255,0.85);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-top: 10px;
+    font-size: 0.95rem;
+    color: #111;
+}
+
+/* Button-Text für file_uploader */
+button[data-testid="baseButton-secondary"] {
+    font-size: 0.9rem !important;
+}
 </style>
+""", unsafe_allow_html=True)
+
+# CSS für Button-Text-Anpassung (Alternative mit JavaScript)
+st.markdown("""
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+        if (btn.textContent.includes('Browse files')) {
+            btn.textContent = 'Data';
+        }
+    });
+});
+</script>
 """, unsafe_allow_html=True)
 
 # Terminal 1 - Hellpink
