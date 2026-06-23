@@ -2,6 +2,11 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
+st.markdown(
+    '<h1 style="text-align:center; color:#000000; font-size:4rem; margin-top:0.5rem; margin-bottom:1rem;">LOD Rechner</h1>',
+    unsafe_allow_html=True
+)
+
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
 
