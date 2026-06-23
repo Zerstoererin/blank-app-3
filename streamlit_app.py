@@ -9,25 +9,43 @@ if "show_pride_message" not in st.session_state:
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
 
-font_options = {
-    "Sans Serif": "Arial, sans-serif",
-    "Serif": "Georgia, serif",
-    "Monospace": "'Courier New', monospace",
-    "Cursive": "'Comic Sans MS', cursive, sans-serif",
-    "Modern": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
-}
-
-selected_font = st.selectbox("Schriftart auswählen", list(font_options.keys()), index=0)
-selected_font_family = font_options[selected_font]
-
 st.markdown(
-    f'<h1 style="text-align:center; font-family:{selected_font_family}; font-size:3.2rem; margin-bottom:0.5rem;">LOD Berechner</h1>',
+    '''
+    <div id="typewriter" style="text-align:center; font-size:3.2rem; margin-bottom:0.5rem;"></div>
+    <script>
+    const typeText = "LOD Berechner";
+    const typeEl = document.getElementById("typewriter");
+    function startTyping() {
+        typeEl.textContent = "";
+        let i = 0;
+        function typeNext() {
+            if (i < typeText.length) {
+                typeEl.textContent += typeText.charAt(i);
+                i += 1;
+                setTimeout(typeNext, 120);
+            } else {
+                setTimeout(startTyping, 1200);
+            }
+        }
+        typeNext();
+    }
+    startTyping();
+    </script>
+    ''',
     unsafe_allow_html=True
 )
 
 # Custom CSS für die Terminals und Pride Button
 st.markdown("""
 <style>
+body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3, h4, h5, h6 {
+    font-family: 'Courier New', monospace !important;
+}
+
+#typewriter {
+    font-family: 'Courier New', monospace !important;
+}
+
 .pride-button-container {
     position: fixed;
     top: 100px;
