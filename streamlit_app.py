@@ -46,32 +46,6 @@ else:
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
 
-st.markdown(
-    '''
-    <div id="typewriter" style="text-align:center; font-size:4rem; font-weight:bold; color:#000000; margin-bottom:0.8rem;"></div>
-    <script>
-    const typeText = "LOD Rechner";
-    const typeEl = document.getElementById("typewriter");
-    function startTyping() {
-        typeEl.textContent = "";
-        let i = 0;
-        function typeNext() {
-            if (i < typeText.length) {
-                typeEl.textContent += typeText.charAt(i);
-                i += 1;
-                setTimeout(typeNext, 120);
-            } else {
-                setTimeout(startTyping, 1200);
-            }
-        }
-        typeNext();
-    }
-    startTyping();
-    </script>
-    ''',
-    unsafe_allow_html=True
-)
-
 # Custom CSS für die Terminals und globale Schrift
 st.markdown("""
 <style>
