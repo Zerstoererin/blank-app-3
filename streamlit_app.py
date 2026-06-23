@@ -3,7 +3,11 @@ import streamlit as st
 st.set_page_config(layout="wide")
 
 st.markdown(
-    '<h1 style="text-align:center; color:#000000; font-size:4rem; margin-top:0.5rem; margin-bottom:1rem;">LOD Rechner</h1>',
+    '<div style="text-align:center; margin-top:0.5rem; margin-bottom:1rem; font-size:4rem; color:#000000; font-weight:bold;">
+        <span title="Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann." style="cursor:help; margin-right:0.5rem;">★</span>
+        LOD Rechner
+        <span title="Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann." style="cursor:help; margin-left:0.5rem;">★</span>
+    </div>',
     unsafe_allow_html=True
 )
 
