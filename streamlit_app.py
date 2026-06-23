@@ -11,9 +11,9 @@ pride_message_placeholder = st.empty()
 
 st.markdown(
     '''
-    <div id="typewriter" style="text-align:center; font-size:3.2rem; margin-bottom:0.5rem;"></div>
+    <div id="typewriter" style="text-align:center; font-size:4rem; font-weight:bold; color:#000000; margin-bottom:0.8rem;"></div>
     <script>
-    const typeText = "LOD Berechner";
+    const typeText = "LOD Rechner";
     const typeEl = document.getElementById("typewriter");
     function startTyping() {
         typeEl.textContent = "";
