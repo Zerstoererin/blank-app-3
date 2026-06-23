@@ -9,7 +9,7 @@ if "show_pride_message" not in st.session_state:
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
 
-st.title("Nachweisgrenze Berechnung")
+st.title("LOD Berechner")
 
 # Custom CSS für die Terminals und Pride Button
 st.markdown("""
