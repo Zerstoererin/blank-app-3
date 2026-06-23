@@ -9,7 +9,21 @@ if "show_pride_message" not in st.session_state:
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
 
-st.title("LOD Berechner")
+font_options = {
+    "Sans Serif": "Arial, sans-serif",
+    "Serif": "Georgia, serif",
+    "Monospace": "'Courier New', monospace",
+    "Cursive": "'Comic Sans MS', cursive, sans-serif",
+    "Modern": "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+}
+
+selected_font = st.selectbox("Schriftart auswählen", list(font_options.keys()), index=0)
+selected_font_family = font_options[selected_font]
+
+st.markdown(
+    f'<h1 style="text-align:center; font-family:{selected_font_family}; font-size:3.2rem; margin-bottom:0.5rem;">LOD Berechner</h1>',
+    unsafe_allow_html=True
+)
 
 # Custom CSS für die Terminals und Pride Button
 st.markdown("""
