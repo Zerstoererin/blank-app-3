@@ -83,12 +83,12 @@ st.markdown(
 
 # Terminal 2 - Helllila
 st.markdown(
-    '<div class="terminal-box terminal-lilac">Formel 2: Bestimmungsgrenze</div>',
+    '<div class="terminal-box terminal-lilac"><div style="font-size:0.9rem; line-height:1.2;">Kalibriergerade bestimmen</div></div>',
     unsafe_allow_html=True
 )
 
 # Terminal 3 - Hellblau
 st.markdown(
-    '<div class="terminal-box terminal-blue">Formel 3: Messgenauigkeit</div>',
+    '<div class="terminal-box terminal-blue"><div style="font-size:0.9rem; line-height:1.2;">LOD Berechnen</div></div>',
     unsafe_allow_html=True
 )
