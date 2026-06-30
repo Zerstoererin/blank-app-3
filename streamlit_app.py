@@ -301,15 +301,6 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 """, unsafe_allow_html=True)
 
-if 'last_result' in st.session_state and 'last_source' in st.session_state:
-    last_data = st.session_state.last_result
-    last_source = st.session_state.last_source
-    if last_data is not None and not last_data.empty:
-        st.subheader('Ergebnis im Kontext')
-        st.markdown(
-            f"Die Datei **{last_source}** wurde ausgewertet. Die Berechnung basiert auf {len(last_data)} Datensätzen und liefert eine Abschätzung der Nachweisgrenze (LOD) aus Blindwerten und Kalibrierpunkten."
-        )
-
 # Terminal 1 - Hellpink
 st.markdown(
     f'<div class="terminal-box terminal-pink"><div style="font-size:0.9rem; line-height:1.2;">{terminal1_content}</div></div>',
