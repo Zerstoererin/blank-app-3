@@ -40,6 +40,13 @@ with col2:
 with col3:
     use_sample_csv = st.button('Beispiel-Daten laden (CSV)', use_container_width=True)
     use_sample_txt = st.button('Beispiel-Daten laden (TXT)', use_container_width=True)
+    clear_results = st.button('Clear', use_container_width=True)
+
+
+if clear_results:
+    st.session_state.pop('last_result', None)
+    st.session_state.pop('last_source', None)
+    st.session_state.pop('last_preview', None)
 
 
 def process_data_frame(data_frame, source_name):
@@ -100,6 +107,9 @@ if use_sample_csv:
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
     st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+    st.session_state.last_result = data_frame
+    st.session_state.last_source = sample_path.name
+    st.session_state.last_preview = data_frame.copy()
 elif use_sample_txt:
     sample_path = Path(__file__).with_name('sample_lod_data.txt')
     sample_bytes = sample_path.read_bytes()
@@ -109,6 +119,9 @@ elif use_sample_txt:
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
     st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+    st.session_state.last_result = data_frame
+    st.session_state.last_source = sample_path.name
+    st.session_state.last_preview = data_frame.copy()
 elif uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
 
@@ -125,6 +138,9 @@ elif uploaded_file is not None:
         st.subheader('Vorschau der eingelesenen Daten')
         st.dataframe(data_frame, use_container_width=True)
         st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+        st.session_state.last_result = data_frame
+        st.session_state.last_source = uploaded_file.name
+        st.session_state.last_preview = data_frame.copy()
     except Exception as exc:
         st.error(f'Fehler beim Einlesen der Datei: {exc}')
         terminal1_content = (
@@ -284,6 +300,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 """, unsafe_allow_html=True)
+
+if 'last_result' in st.session_state and 'last_source' in st.session_state:
+    last_data = st.session_state.last_result
+    last_source = st.session_state.last_source
+    if last_data is not None and not last_data.empty:
+        st.subheader('Ergebnis im Kontext')
+        st.markdown(
+            f"Die Datei **{last_source}** wurde ausgewertet. Die Berechnung basiert auf {len(last_data)} Datensätzen und liefert eine Abschätzung der Nachweisgrenze (LOD) aus Blindwerten und Kalibrierpunkten."
+        )
 
 # Terminal 1 - Hellpink
 st.markdown(
