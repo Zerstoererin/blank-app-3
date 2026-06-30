@@ -1,4 +1,7 @@
+import pandas as pd
 import streamlit as st
+
+from lod_utils import calculate_lod, prepare_measurement_data
 
 st.set_page_config(layout="wide")
 
@@ -33,21 +36,80 @@ with col2:
 
 if uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
-    terminal1_content = (
-        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
-        '<div class="terminal-formula">$$s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: s_{blank} wird aus den Blindwertdaten berechnet.</div>'
-    )
-    terminal2_content = (
-        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
-        '<div class="terminal-formula">$$m = \frac{n\sum_{i=1}^{n} x_i y_i - \sum_{i=1}^{n} x_i \sum_{i=1}^{n} y_i}{n\sum_{i=1}^{n} x_i^2 - (\sum_{i=1}^{n} x_i)^2}\\[6pt]c = \bar{y} - m\bar{x}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: Steigung m und Achsenabschnitt c werden ermittelt.</div>'
-    )
-    terminal3_content = (
-        '<div class="terminal-heading">LOD Berechnen</div>'
-        '<div class="terminal-formula">$$LOD = 3.3 \frac{s_{blank}}{m}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: LOD wird aus s_{blank} und m berechnet.</div>'
-    )
+
+    try:
+        if file_type == 'CSV':
+            data_frame = pd.read_csv(uploaded_file)
+        elif file_type == 'XLSX':
+            data_frame = pd.read_excel(uploaded_file)
+        else:
+            data_frame = pd.read_csv(uploaded_file, sep='\t')
+
+        if data_frame.empty:
+            raise ValueError('Die Datei enthält keine Zeilen.')
+
+        data_frame.columns = [col.strip().lower() for col in data_frame.columns]
+        expected_columns = {'measurement_type', 'concentration', 'signal'}
+        missing_columns = expected_columns.difference(data_frame.columns)
+        if missing_columns:
+            raise ValueError(f'Fehlende Spalten: {sorted(missing_columns)}')
+
+        data_frame['measurement_type'] = data_frame['measurement_type'].astype(str).str.strip().str.lower()
+        data_frame['concentration'] = pd.to_numeric(data_frame['concentration'], errors='coerce')
+        data_frame['signal'] = pd.to_numeric(data_frame['signal'], errors='coerce')
+        data_frame = data_frame.dropna(subset=['measurement_type', 'signal'])
+
+        records = data_frame.to_dict(orient='records')
+        blank_signals, calibration = prepare_measurement_data(records)
+        lod_value = calculate_lod(blank_signals, calibration)
+
+        blank_mean = sum(blank_signals) / len(blank_signals)
+        blank_sd = pd.Series(blank_signals).std(ddof=1) if len(blank_signals) > 1 else 0.0
+
+        x_values = [x for x, _ in calibration]
+        y_values = [y for _, y in calibration]
+        x_mean = sum(x_values) / len(x_values)
+        y_mean = sum(y_values) / len(y_values)
+        numerator = sum((x - x_mean) * (y - y_mean) for x, y in calibration)
+        denominator = sum((x - x_mean) ** 2 for x, _ in calibration)
+        slope = numerator / denominator if denominator else 0.0
+
+        terminal1_content = (
+            '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
+            '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
+            f'<div class="terminal-result-box">Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · Standardabweichung: {blank_sd:.4f}</div>'
+        )
+        terminal2_content = (
+            '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
+            '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
+            f'<div class="terminal-result-box">Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}</div>'
+        )
+        terminal3_content = (
+            '<div class="terminal-heading">LOD Berechnen</div>'
+            '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
+            f'<div class="terminal-result-box">LOD: {lod_value:.6f}</div>'
+        )
+
+        st.subheader('Vorschau der eingelesenen Daten')
+        st.dataframe(data_frame, use_container_width=True)
+        st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+    except Exception as exc:
+        st.error(f'Fehler beim Einlesen der Datei: {exc}')
+        terminal1_content = (
+            '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
+            '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
+            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
+        )
+        terminal2_content = (
+            '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
+            '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
+            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
+        )
+        terminal3_content = (
+            '<div class="terminal-heading">LOD Berechnen</div>'
+            '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
+            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
+        )
 else:
     st.info('Bitte eine Datei hochladen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
     terminal1_content = (
