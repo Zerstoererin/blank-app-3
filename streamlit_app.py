@@ -1,3 +1,6 @@
+from io import BytesIO
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
 
@@ -20,7 +23,7 @@ st.markdown(
 
 st.markdown('## Daten hochladen', unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns([1, 1, 1])
 
 with col1:
     file_type = st.selectbox(
@@ -34,7 +37,79 @@ with col2:
         type=['csv', 'xlsx', 'txt']
     )
 
-if uploaded_file is not None:
+with col3:
+    use_sample_csv = st.button('Beispiel-Daten laden (CSV)', use_container_width=True)
+    use_sample_txt = st.button('Beispiel-Daten laden (TXT)', use_container_width=True)
+
+
+def process_data_frame(data_frame, source_name):
+    if data_frame.empty:
+        raise ValueError('Die Datei enthält keine Zeilen.')
+
+    data_frame.columns = [col.strip().lower() for col in data_frame.columns]
+    expected_columns = {'measurement_type', 'concentration', 'signal'}
+    missing_columns = expected_columns.difference(data_frame.columns)
+    if missing_columns:
+        raise ValueError(f'Fehlende Spalten: {sorted(missing_columns)}')
+
+    data_frame['measurement_type'] = data_frame['measurement_type'].astype(str).str.strip().str.lower()
+    data_frame['concentration'] = pd.to_numeric(data_frame['concentration'], errors='coerce')
+    data_frame['signal'] = pd.to_numeric(data_frame['signal'], errors='coerce')
+    data_frame = data_frame.dropna(subset=['measurement_type', 'signal'])
+
+    records = data_frame.to_dict(orient='records')
+    blank_signals, calibration = prepare_measurement_data(records)
+    lod_value = calculate_lod(blank_signals, calibration)
+
+    blank_mean = sum(blank_signals) / len(blank_signals)
+    blank_sd = pd.Series(blank_signals).std(ddof=1) if len(blank_signals) > 1 else 0.0
+
+    x_values = [x for x, _ in calibration]
+    y_values = [y for _, y in calibration]
+    x_mean = sum(x_values) / len(x_values)
+    y_mean = sum(y_values) / len(y_values)
+    numerator = sum((x - x_mean) * (y - y_mean) for x, y in calibration)
+    denominator = sum((x - x_mean) ** 2 for x, _ in calibration)
+    slope = numerator / denominator if denominator else 0.0
+
+    terminal1_content = (
+        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
+        '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
+        f'<div class="terminal-result-box">{source_name}: Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · Standardabweichung: {blank_sd:.4f}</div>'
+    )
+    terminal2_content = (
+        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
+        '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
+        f'<div class="terminal-result-box">{source_name}: Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}</div>'
+    )
+    terminal3_content = (
+        '<div class="terminal-heading">LOD Berechnen</div>'
+        '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
+        f'<div class="terminal-result-box">{source_name}: LOD: {lod_value:.6f}</div>'
+    )
+
+    return data_frame, terminal1_content, terminal2_content, terminal3_content
+
+
+if use_sample_csv:
+    sample_path = Path(__file__).with_name('sample_lod_data.csv')
+    sample_bytes = sample_path.read_bytes()
+    data_frame = pd.read_csv(BytesIO(sample_bytes))
+    data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, sample_path.name)
+    st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
+    st.subheader('Vorschau der eingelesenen Daten')
+    st.dataframe(data_frame, use_container_width=True)
+    st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+elif use_sample_txt:
+    sample_path = Path(__file__).with_name('sample_lod_data.txt')
+    sample_bytes = sample_path.read_bytes()
+    data_frame = pd.read_csv(BytesIO(sample_bytes), sep='\t')
+    data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, sample_path.name)
+    st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
+    st.subheader('Vorschau der eingelesenen Daten')
+    st.dataframe(data_frame, use_container_width=True)
+    st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
+elif uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
 
     try:
@@ -45,50 +120,7 @@ if uploaded_file is not None:
         else:
             data_frame = pd.read_csv(uploaded_file, sep='\t')
 
-        if data_frame.empty:
-            raise ValueError('Die Datei enthält keine Zeilen.')
-
-        data_frame.columns = [col.strip().lower() for col in data_frame.columns]
-        expected_columns = {'measurement_type', 'concentration', 'signal'}
-        missing_columns = expected_columns.difference(data_frame.columns)
-        if missing_columns:
-            raise ValueError(f'Fehlende Spalten: {sorted(missing_columns)}')
-
-        data_frame['measurement_type'] = data_frame['measurement_type'].astype(str).str.strip().str.lower()
-        data_frame['concentration'] = pd.to_numeric(data_frame['concentration'], errors='coerce')
-        data_frame['signal'] = pd.to_numeric(data_frame['signal'], errors='coerce')
-        data_frame = data_frame.dropna(subset=['measurement_type', 'signal'])
-
-        records = data_frame.to_dict(orient='records')
-        blank_signals, calibration = prepare_measurement_data(records)
-        lod_value = calculate_lod(blank_signals, calibration)
-
-        blank_mean = sum(blank_signals) / len(blank_signals)
-        blank_sd = pd.Series(blank_signals).std(ddof=1) if len(blank_signals) > 1 else 0.0
-
-        x_values = [x for x, _ in calibration]
-        y_values = [y for _, y in calibration]
-        x_mean = sum(x_values) / len(x_values)
-        y_mean = sum(y_values) / len(y_values)
-        numerator = sum((x - x_mean) * (y - y_mean) for x, y in calibration)
-        denominator = sum((x - x_mean) ** 2 for x, _ in calibration)
-        slope = numerator / denominator if denominator else 0.0
-
-        terminal1_content = (
-            '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
-            '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
-            f'<div class="terminal-result-box">Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · Standardabweichung: {blank_sd:.4f}</div>'
-        )
-        terminal2_content = (
-            '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
-            '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
-            f'<div class="terminal-result-box">Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}</div>'
-        )
-        terminal3_content = (
-            '<div class="terminal-heading">LOD Berechnen</div>'
-            '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
-            f'<div class="terminal-result-box">LOD: {lod_value:.6f}</div>'
-        )
+        data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, uploaded_file.name)
 
         st.subheader('Vorschau der eingelesenen Daten')
         st.dataframe(data_frame, use_container_width=True)
@@ -111,7 +143,7 @@ if uploaded_file is not None:
             '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
         )
 else:
-    st.info('Bitte eine Datei hochladen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
+    st.info('Bitte eine Datei hochladen oder einen der Beispiel-Buttons nutzen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
     terminal1_content = (
         '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
         '<div class="terminal-formula">$$s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}$$</div>'
