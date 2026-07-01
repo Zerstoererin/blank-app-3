@@ -53,7 +53,7 @@ if clear_results:
 
 def render_terminal_box(box_class, heading, result_text, formulas):
     formula_markup = "".join(
-        f"<div class='terminal-formula'>$$ {escape(formula)} $$</div>"
+        f"<div class='terminal-formula'>{escape(formula)}</div>"
         for formula in formulas
     )
     st.markdown(
@@ -360,7 +360,7 @@ lod_display_value = f"{lod_value:.6f}" if lod_value is not None else '—'
 st.markdown(
     f"""
     <div class='lod-display'>
-        <div class='lod-display-title'>Der LOD Beträgt:</div>
+        <div class='lod-display-title'>Der LOD beträgt:</div>
         <div class='lod-display-value'>{lod_display_value}</div>
     </div>
     """,
