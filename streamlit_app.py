@@ -49,6 +49,15 @@ if clear_results:
     st.session_state.pop('last_preview', None)
 
 
+def render_terminal_box(box_class, heading, result_text, formulas):
+    st.markdown(f"<div class='terminal-box {box_class}'>", unsafe_allow_html=True)
+    st.markdown(f"<div class='terminal-heading'>{heading}</div>", unsafe_allow_html=True)
+    for formula in formulas:
+        st.latex(formula)
+    st.markdown(f"<div class='terminal-result-box'>{result_text}</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+
 def process_data_frame(data_frame, source_name):
     if data_frame.empty:
         raise ValueError('Die Datei enthält keine Zeilen.')
@@ -80,20 +89,13 @@ def process_data_frame(data_frame, source_name):
     slope = numerator / denominator if denominator else 0.0
 
     terminal1_content = (
-        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
-        '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
-        f'<div class="terminal-result-box">{source_name}: Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · Standardabweichung: {blank_sd:.4f}</div>'
+        f"{source_name}: Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · "
+        f"Standardabweichung: {blank_sd:.4f}"
     )
     terminal2_content = (
-        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
-        '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
-        f'<div class="terminal-result-box">{source_name}: Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}</div>'
+        f"{source_name}: Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}"
     )
-    terminal3_content = (
-        '<div class="terminal-heading">LOD Berechnen</div>'
-        '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
-        f'<div class="terminal-result-box">{source_name}: LOD: {lod_value:.6f}</div>'
-    )
+    terminal3_content = f"{source_name}: LOD: {lod_value:.6f}"
 
     return data_frame, terminal1_content, terminal2_content, terminal3_content
 
@@ -143,38 +145,14 @@ elif uploaded_file is not None:
         st.session_state.last_preview = data_frame.copy()
     except Exception as exc:
         st.error(f'Fehler beim Einlesen der Datei: {exc}')
-        terminal1_content = (
-            '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
-            '<div class="terminal-formula">$$s_{blank} = \\sqrt{\\frac{\\sum_{i=1}^{n}(x_i - \\bar{x})^2}{n - 1}}$$</div>'
-            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
-        )
-        terminal2_content = (
-            '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
-            '<div class="terminal-formula">$$m = \\frac{n\\sum_{i=1}^{n} x_i y_i - \\sum_{i=1}^{n} x_i \\sum_{i=1}^{n} y_i}{n\\sum_{i=1}^{n} x_i^2 - (\\sum_{i=1}^{n} x_i)^2}\\\\[6pt]c = \\bar{y} - m\\bar{x}$$</div>'
-            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
-        )
-        terminal3_content = (
-            '<div class="terminal-heading">LOD Berechnen</div>'
-            '<div class="terminal-formula">$$LOD = 3.3 \\frac{s_{blank}}{m}$$</div>'
-            '<div class="terminal-result-box">Fehler: Bitte prüfen Sie das Format.</div>'
-        )
+        terminal1_content = 'Fehler: Bitte prüfen Sie das Format.'
+        terminal2_content = 'Fehler: Bitte prüfen Sie das Format.'
+        terminal3_content = 'Fehler: Bitte prüfen Sie das Format.'
 else:
     st.info('Bitte eine Datei hochladen oder einen der Beispiel-Buttons nutzen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
-    terminal1_content = (
-        '<div class="terminal-heading">Standartabweichung des Blindwerts bestimmen</div>'
-        '<div class="terminal-formula">$$s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
-    )
-    terminal2_content = (
-        '<div class="terminal-heading">Kalibriergerade bestimmen</div>'
-        '<div class="terminal-formula">$$m = \frac{n\sum_{i=1}^{n} x_i y_i - \sum_{i=1}^{n} x_i \sum_{i=1}^{n} y_i}{n\sum_{i=1}^{n} x_i^2 - (\sum_{i=1}^{n} x_i)^2}\\[6pt]c = \bar{y} - m\bar{x}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
-    )
-    terminal3_content = (
-        '<div class="terminal-heading">LOD Berechnen</div>'
-        '<div class="terminal-formula">$$LOD = 3.3 \frac{s_{blank}}{m}$$</div>'
-        '<div class="terminal-result-box">Zwischenergebnis: keine Daten geladen.</div>'
-    )
+    terminal1_content = 'Zwischenergebnis: keine Daten geladen.'
+    terminal2_content = 'Zwischenergebnis: keine Daten geladen.'
+    terminal3_content = 'Zwischenergebnis: keine Daten geladen.'
 
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
@@ -301,20 +279,37 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 """, unsafe_allow_html=True)
 
-# Terminal 1 - Hellpink
-st.markdown(
-    f'<div class="terminal-box terminal-pink"><div style="font-size:0.9rem; line-height:1.2;">{terminal1_content}</div></div>',
-    unsafe_allow_html=True
+render_terminal_box(
+    'terminal-pink',
+    'Standartabweichung des Blindwerts bestimmen',
+    terminal1_content,
+    [r'''s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}''']
 )
 
-# Terminal 2 - Helllila
-st.markdown(
-    f'<div class="terminal-box terminal-lilac"><div style="font-size:0.9rem; line-height:1.2;">{terminal2_content}</div></div>',
-    unsafe_allow_html=True
+render_terminal_box(
+    'terminal-lilac',
+    'Kalibriergerade bestimmen',
+    terminal2_content,
+    [
+        r'''
+        m =
+        \frac{
+        n\sum_{i=1}^{n} x_i y_i
+        -
+        \sum_{i=1}^{n} x_i \sum_{i=1}^{n} y_i
+        }{
+        n\sum_{i=1}^{n} x_i^2
+        -
+        \left(\sum_{i=1}^{n} x_i\right)^2
+        }
+        ''',
+        r'''c = \bar{y} - m\bar{x}'''
+    ]
 )
 
-# Terminal 3 - Hellblau
-st.markdown(
-    f'<div class="terminal-box terminal-blue"><div style="font-size:0.9rem; line-height:1.2;">{terminal3_content}</div></div>',
-    unsafe_allow_html=True
+render_terminal_box(
+    'terminal-blue',
+    'LOD Berechnen',
+    terminal3_content,
+    [r'''LOD = 3.3 \frac{s_{blank}}{m}''']
 )
