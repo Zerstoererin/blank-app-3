@@ -52,8 +52,11 @@ if clear_results:
 def render_terminal_box(box_class, heading, result_text, formulas):
     st.markdown(f"<div class='terminal-box {box_class}'>", unsafe_allow_html=True)
     st.markdown(f"<div class='terminal-heading'>{heading}</div>", unsafe_allow_html=True)
-    for formula in formulas:
-        st.latex(formula)
+    if formulas:
+        st.markdown("<div class='terminal-formula'>", unsafe_allow_html=True)
+        for formula in formulas:
+            st.latex(formula)
+        st.markdown("</div>", unsafe_allow_html=True)
     st.markdown(f"<div class='terminal-result-box'>{result_text}</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -246,6 +249,7 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
     line-height: 1.5;
     white-space: normal;
     margin-bottom: 0.75rem;
+    margin-top: 0.2rem;
 }
 
 .terminal-result-box {
@@ -281,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 render_terminal_box(
     'terminal-pink',
-    'Standartabweichung des Blindwerts bestimmen',
+    'Standardabweichung des Blindwerts bestimmen',
     terminal1_content,
     [r'''s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}''']
 )
