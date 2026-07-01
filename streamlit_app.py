@@ -1,3 +1,4 @@
+from html import escape
 from io import BytesIO
 from pathlib import Path
 
@@ -47,18 +48,24 @@ if clear_results:
     st.session_state.pop('last_result', None)
     st.session_state.pop('last_source', None)
     st.session_state.pop('last_preview', None)
+    st.session_state.pop('last_lod_value', None)
 
 
 def render_terminal_box(box_class, heading, result_text, formulas):
-    st.markdown(f"<div class='terminal-box {box_class}'>", unsafe_allow_html=True)
-    st.markdown(f"<div class='terminal-heading'>{heading}</div>", unsafe_allow_html=True)
-    if formulas:
-        st.markdown("<div class='terminal-formula'>", unsafe_allow_html=True)
-        for formula in formulas:
-            st.latex(formula)
-        st.markdown("</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='terminal-result-box'>{result_text}</div>", unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    formula_markup = "".join(
+        f"<div class='terminal-formula'>$$ {escape(formula)} $$</div>"
+        for formula in formulas
+    )
+    st.markdown(
+        f"""
+        <div class='terminal-box {box_class}'>
+            <div class='terminal-heading'>{escape(heading)}</div>
+            {formula_markup}
+            <div class='terminal-result-box'>{escape(result_text)}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def process_data_frame(data_frame, source_name):
@@ -100,14 +107,14 @@ def process_data_frame(data_frame, source_name):
     )
     terminal3_content = f"{source_name}: LOD: {lod_value:.6f}"
 
-    return data_frame, terminal1_content, terminal2_content, terminal3_content
+    return data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value
 
 
 if use_sample_csv:
     sample_path = Path(__file__).with_name('sample_lod_data.csv')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes))
-    data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -115,11 +122,12 @@ if use_sample_csv:
     st.session_state.last_result = data_frame
     st.session_state.last_source = sample_path.name
     st.session_state.last_preview = data_frame.copy()
+    st.session_state.last_lod_value = lod_value
 elif use_sample_txt:
     sample_path = Path(__file__).with_name('sample_lod_data.txt')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes), sep='\t')
-    data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -127,6 +135,7 @@ elif use_sample_txt:
     st.session_state.last_result = data_frame
     st.session_state.last_source = sample_path.name
     st.session_state.last_preview = data_frame.copy()
+    st.session_state.last_lod_value = lod_value
 elif uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
 
@@ -138,7 +147,7 @@ elif uploaded_file is not None:
         else:
             data_frame = pd.read_csv(uploaded_file, sep='\t')
 
-        data_frame, terminal1_content, terminal2_content, terminal3_content = process_data_frame(data_frame, uploaded_file.name)
+        data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, uploaded_file.name)
 
         st.subheader('Vorschau der eingelesenen Daten')
         st.dataframe(data_frame, use_container_width=True)
@@ -146,16 +155,19 @@ elif uploaded_file is not None:
         st.session_state.last_result = data_frame
         st.session_state.last_source = uploaded_file.name
         st.session_state.last_preview = data_frame.copy()
+        st.session_state.last_lod_value = lod_value
     except Exception as exc:
         st.error(f'Fehler beim Einlesen der Datei: {exc}')
         terminal1_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal2_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal3_content = 'Fehler: Bitte prüfen Sie das Format.'
+        lod_value = None
 else:
     st.info('Bitte eine Datei hochladen oder einen der Beispiel-Buttons nutzen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
     terminal1_content = 'Zwischenergebnis: keine Daten geladen.'
     terminal2_content = 'Zwischenergebnis: keine Daten geladen.'
     terminal3_content = 'Zwischenergebnis: keine Daten geladen.'
+    lod_value = st.session_state.get('last_lod_value')
 
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
@@ -262,6 +274,32 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
     color: #111;
 }
 
+.lod-display {
+    background-color: #FFF5A5;
+    border: 2px solid #E0C53A;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-top: 1.5rem;
+    text-align: center;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.lod-display-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 0.75rem;
+    color: #333;
+}
+
+.lod-display-value {
+    font-size: 2.6rem;
+    font-weight: bold;
+    color: #111;
+}
+
 /* Button-Text für file_uploader */
 button[data-testid="baseButton-secondary"] {
     font-size: 0.9rem !important;
@@ -316,4 +354,15 @@ render_terminal_box(
     'LOD Berechnen',
     terminal3_content,
     [r'''LOD = 3.3 \frac{s_{blank}}{m}''']
+)
+
+lod_display_value = f"{lod_value:.6f}" if lod_value is not None else '—'
+st.markdown(
+    f"""
+    <div class='lod-display'>
+        <div class='lod-display-title'>Der LOD Beträgt:</div>
+        <div class='lod-display-value'>{lod_display_value}</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
 )
