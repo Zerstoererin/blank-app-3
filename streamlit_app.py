@@ -51,21 +51,39 @@ if clear_results:
     st.session_state.pop('last_lod_value', None)
 
 
-def render_terminal_box(box_class, heading, result_text, formulas):
-    formula_markup = "".join(
-        f"<div class='terminal-formula'>{escape(formula)}</div>"
-        for formula in formulas
-    )
-    st.markdown(
-        f"""
-        <div class='terminal-box {box_class}'>
-            <div class='terminal-heading'>{escape(heading)}</div>
-            {formula_markup}
-            <div class='terminal-result-box'>{escape(result_text)}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
+    if latex:
+        st.markdown(
+            f"""
+            <div class='terminal-box {box_class}'>
+                <div class='terminal-heading'>{escape(heading)}</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        for formula in formulas:
+            st.latex(formula)
+        st.markdown(
+            f"""
+                <div class='terminal-result-box'>{escape(result_text)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        formula_markup = "".join(
+            f"<div class='terminal-formula'>{escape(formula)}</div>"
+            for formula in formulas
+        )
+        st.markdown(
+            f"""
+            <div class='terminal-box {box_class}'>
+                <div class='terminal-heading'>{escape(heading)}</div>
+                {formula_markup}
+                <div class='terminal-result-box'>{escape(result_text)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def process_data_frame(data_frame, source_name):
@@ -346,14 +364,16 @@ render_terminal_box(
         }
         ''',
         r'''c = \bar{y} - m\bar{x}'''
-    ]
+    ],
+    latex=True,
 )
 
 render_terminal_box(
     'terminal-blue',
     'LOD Berechnen',
     terminal3_content,
-    [r'''LOD = 3.3 \frac{s_{blank}}{m}''']
+    [r'''LOD = 3.3 \\frac{s_{blank}}{m}'''],
+    latex=True,
 )
 
 lod_display_value = f"{lod_value:.6f}" if lod_value is not None else '—'
