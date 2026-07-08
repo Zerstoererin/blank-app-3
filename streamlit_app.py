@@ -14,7 +14,7 @@ st.markdown(
         <span class="tooltip-container" style="margin-right:0.5rem;">★
             <span class="tooltip-text">Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann.<br><a href="https://de.wikipedia.org/wiki/Nachweisgrenze" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration:underline;">Quelle</a></span>
         </span>
-        LOD Rechner
+        Nachweisgrenze-Berechner
         <span class="tooltip-container" style="margin-left:0.5rem;">★
             <span class="tooltip-text">Die Nachweisgrenze (englisch limit of detection, LOD) bezeichnet den extremen Wert eines Messverfahrens, bis zu dem die Messgröße gerade noch zuverlässig nachgewiesen werden kann.<br><a href="https://de.wikipedia.org/wiki/Nachweisgrenze" target="_blank" rel="noopener noreferrer" style="color:#fff; text-decoration:underline;">Quelle</a></span>
         </span>
@@ -210,20 +210,20 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
 }
 
 .terminal-pink {
-    background-color: #FFB6D9;
-    border: 2px solid #FF69B4;
+    background-color: #f0f0f0; /* Light gray */
+    border: 2px solid #a0a0a0; /* Gray */
     color: #333;
 }
 
 .terminal-lilac {
-    background-color: #E6D7F0;
-    border: 2px solid #DA70D6;
+    background-color: #e0e0e0; /* Slightly darker light gray */
+    border: 2px solid #909090; /* Darker gray */
     color: #333;
 }
 
 .terminal-blue {
-    background-color: #B3D9FF;
-    border: 2px solid #4DA6FF;
+    background-color: #d0d0d0; /* Even darker light gray */
+    border: 2px solid #808080; /* Dark gray */
     color: #333;
 }
 
@@ -293,8 +293,8 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
 }
 
 .lod-display {
-    background-color: #FFF5A5;
-    border: 2px solid #E0C53A;
+    background-color: #f8f8f8; /* Very light gray */
+    border: 2px solid #cccccc; /* Light gray */
     border-radius: 12px;
     padding: 1.5rem 2rem;
     margin-top: 1.5rem;
@@ -372,7 +372,7 @@ render_terminal_box(
     'terminal-blue',
     'LOD Berechnen',
     terminal3_content,
-    [r'''LOD = 3.3 \\frac{s_{blank}}{m}'''],
+    [r'''LOD = 3.3 \frac{s_{blank}}{m}'''],
     latex=True,
 )
 
