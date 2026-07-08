@@ -17,3 +17,16 @@ A simple Streamlit app template for you to modify!
    ```
    $ streamlit run streamlit_app.py
    ```
+### Notes about this fork
+
+- UI title changed to "Nachweisgrenze-Berechner" and terminal boxes use monospace styling.
+- Mathematical formulas (Standardabweichung, Kalibriergerade, LOD) are rendered with Streamlit's LaTeX support (`st.latex`).
+- Sample data files: `sample_lod_data.csv`, `sample_lod_data.txt` (use the buttons in the app to load them).
+
+### Tests
+
+Run the unit tests with:
+
+```
+$ pytest -q
+```
