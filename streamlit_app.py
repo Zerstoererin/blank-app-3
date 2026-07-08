@@ -233,10 +233,9 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
     color: #333;
 }
 
-.terminal-green {
-    background-color: #d8f5d8; /* Light green */
-    border: 2px solid #7cb342; /* Green */
-    color: #333;
+     background-color: #f0f0f0; /* Light gray - match other terminals */
+     border: 2px solid #a0a0a0; /* Gray border */
+     color: #333;
 }
 
 .terminal-blue {
