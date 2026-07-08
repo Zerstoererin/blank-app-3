@@ -360,7 +360,7 @@ render_terminal_box(
     'terminal-pink',
     'Standardabweichung des Blindwerts bestimmen',
     terminal1_content,
-    [r'''s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}'''],
+    [r'''\sigma = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}'''],
     latex=True
 )
 
