@@ -49,25 +49,10 @@ if clear_results:
     st.session_state.pop('last_source', None)
     st.session_state.pop('last_preview', None)
     st.session_state.pop('last_lod_value', None)
+    st.session_state.pop('last_loq_value', None)
 
 
-def render_terminal_box(box_class, heading, result_text, formulas, latex=False, render_formula_as_image=False):
-    def _latex_to_image(latex_str):
-        try:
-            import matplotlib.pyplot as plt
-        except Exception:
-            return None
-
-        fig = plt.figure()
-        # render mathtext (matplotlib's subset of LaTeX)
-        fig.text(0.5, 0.5, f"${latex_str}$", ha='center', va='center', fontsize=20)
-        plt.axis('off')
-        buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=200, bbox_inches='tight', transparent=True)
-        plt.close(fig)
-        buf.seek(0)
-        return buf
-
+def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
     if latex:
         st.markdown(
             f"""
@@ -77,16 +62,7 @@ def render_terminal_box(box_class, heading, result_text, formulas, latex=False, 
             unsafe_allow_html=True,
         )
         for formula in formulas:
-            if render_formula_as_image:
-                img = _latex_to_image(formula)
-                if img is not None:
-                    st.image(img)
-                    continue
-            try:
-                st.latex(formula)
-            except Exception:
-                # fallback: show escaped text
-                st.markdown(f"<div class='terminal-formula'>{escape(formula)}</div>", unsafe_allow_html=True)
+            st.latex(formula)
         st.markdown(
             f"""
                 <div class='terminal-result-box'>{escape(result_text)}</div>
@@ -141,6 +117,9 @@ def process_data_frame(data_frame, source_name):
     denominator = sum((x - x_mean) ** 2 for x, _ in calibration)
     slope = numerator / denominator if denominator else 0.0
 
+    # Calculate LOQ
+    loq_value = 10 * (blank_sd / slope) if slope != 0 else 0.0
+
     terminal1_content = (
         f"{source_name}: Blindwerte: {len(blank_signals)} · Mittelwert: {blank_mean:.4f} · "
         f"Standardabweichung: {blank_sd:.4f}"
@@ -149,15 +128,16 @@ def process_data_frame(data_frame, source_name):
         f"{source_name}: Kalibrierpunkte: {len(calibration)} · Steigung m: {slope:.4f}"
     )
     terminal3_content = f"{source_name}: LOD: {lod_value:.6f}"
+    terminal4_content = f"{source_name}: LOQ: {loq_value:.6f}"
 
-    return data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value
+    return data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value
 
 
 if use_sample_csv:
     sample_path = Path(__file__).with_name('sample_lod_data.csv')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes))
-    data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -166,11 +146,12 @@ if use_sample_csv:
     st.session_state.last_source = sample_path.name
     st.session_state.last_preview = data_frame.copy()
     st.session_state.last_lod_value = lod_value
+    st.session_state.last_loq_value = loq_value
 elif use_sample_txt:
     sample_path = Path(__file__).with_name('sample_lod_data.txt')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes), sep='\t')
-    data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -179,6 +160,7 @@ elif use_sample_txt:
     st.session_state.last_source = sample_path.name
     st.session_state.last_preview = data_frame.copy()
     st.session_state.last_lod_value = lod_value
+    st.session_state.last_loq_value = loq_value
 elif uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
 
@@ -190,7 +172,7 @@ elif uploaded_file is not None:
         else:
             data_frame = pd.read_csv(uploaded_file, sep='\t')
 
-        data_frame, terminal1_content, terminal2_content, terminal3_content, lod_value = process_data_frame(data_frame, uploaded_file.name)
+        data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, uploaded_file.name)
 
         st.subheader('Vorschau der eingelesenen Daten')
         st.dataframe(data_frame, use_container_width=True)
@@ -199,18 +181,23 @@ elif uploaded_file is not None:
         st.session_state.last_source = uploaded_file.name
         st.session_state.last_preview = data_frame.copy()
         st.session_state.last_lod_value = lod_value
+        st.session_state.last_loq_value = loq_value
     except Exception as exc:
         st.error(f'Fehler beim Einlesen der Datei: {exc}')
         terminal1_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal2_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal3_content = 'Fehler: Bitte prüfen Sie das Format.'
+        terminal4_content = 'Fehler: Bitte prüfen Sie das Format.'
         lod_value = None
+        loq_value = None
 else:
     st.info('Bitte eine Datei hochladen oder einen der Beispiel-Buttons nutzen, damit die drei Berechnungsschritte in den Terminalfeldern ausgeführt werden können.')
     terminal1_content = 'Zwischenergebnis: keine Daten geladen.'
     terminal2_content = 'Zwischenergebnis: keine Daten geladen.'
     terminal3_content = 'Zwischenergebnis: keine Daten geladen.'
+    terminal4_content = 'Zwischenergebnis: keine Daten geladen.'
     lod_value = st.session_state.get('last_lod_value')
+    loq_value = st.session_state.get('last_loq_value')
 
 # Placeholder für die Pride Message
 pride_message_placeholder = st.empty()
@@ -243,6 +230,12 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
 .terminal-lilac {
     background-color: #e0e0e0; /* Slightly darker light gray */
     border: 2px solid #909090; /* Darker gray */
+    color: #333;
+}
+
+.terminal-green {
+    background-color: #d8f5d8; /* Light green */
+    border: 2px solid #7cb342; /* Green */
     color: #333;
 }
 
@@ -369,8 +362,7 @@ render_terminal_box(
     'Standardabweichung des Blindwerts bestimmen',
     terminal1_content,
     [r'''s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}'''],
-    latex=True,
-    render_formula_as_image=True,
+    latex=True
 )
 
 render_terminal_box(
@@ -396,6 +388,14 @@ render_terminal_box(
 )
 
 render_terminal_box(
+    'terminal-green',
+    'LOQ Berechnen',
+    terminal4_content,
+    [r'''LOQ = 10 \frac{s_{blank}}{m}'''],
+    latex=True,
+)
+
+render_terminal_box(
     'terminal-blue',
     'LOD Berechnen',
     terminal3_content,
@@ -403,13 +403,30 @@ render_terminal_box(
     latex=True,
 )
 
+
 lod_display_value = f"{lod_value:.6f}" if lod_value is not None else '—'
-st.markdown(
-    f"""
-    <div class='lod-display'>
-        <div class='lod-display-title'>Der LOD beträgt:</div>
-        <div class='lod-display-value'>{lod_display_value}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+loq_display_value = f"{loq_value:.6f}" if loq_value is not None else '—'
+
+final_col1, final_col2 = st.columns([1, 1])
+
+with final_col1:
+    st.markdown(
+        f"""
+        <div class='lod-display'>
+            <div class='lod-display-title'>Der LOD beträgt:</div>
+            <div class='lod-display-value'>{lod_display_value}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+with final_col2:
+    st.markdown(
+        f"""
+        <div class='lod-display'>
+            <div class='lod-display-title'>Der LOQ beträgt:</div>
+            <div class='lod-display-value'>{loq_display_value}</div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
