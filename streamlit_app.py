@@ -390,7 +390,7 @@ render_terminal_box(
     'terminal-green',
     'LOQ Berechnen',
     terminal4_content,
-    [r'''LOQ = 10 \frac{s_{blank}}{m}'''],
+    [r'''LOQ = \frac{10\,\sigma}{S}'''],
     latex=True,
 )
 
@@ -398,7 +398,7 @@ render_terminal_box(
     'terminal-blue',
     'LOD Berechnen',
     terminal3_content,
-    [r'''LOD = 3.3 \frac{s_{blank}}{m}'''],
+    [r'''LOD = \frac{3\,\sigma}{S}'''],
     latex=True,
 )
 
