@@ -52,22 +52,7 @@ if clear_results:
     st.session_state.pop('last_loq_value', None)
 
 
-def render_terminal_box(box_class, heading, result_text, formulas, latex=False, render_formula_as_image=False):
-    def _latex_to_image(latex_str: str):
-        try:
-            import matplotlib.pyplot as plt
-        except Exception:
-            return None
-
-        fig = plt.figure()
-        fig.text(0.5, 0.5, f"${latex_str}$", ha='center', va='center', fontsize=20)
-        plt.axis('off')
-        buf = BytesIO()
-        plt.savefig(buf, format='png', dpi=200, bbox_inches='tight', transparent=True)
-        plt.close(fig)
-        buf.seek(0)
-        return buf
-
+def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
     if latex:
         st.markdown(
             f"""
@@ -77,15 +62,7 @@ def render_terminal_box(box_class, heading, result_text, formulas, latex=False, 
             unsafe_allow_html=True,
         )
         for formula in formulas:
-            if render_formula_as_image:
-                img = _latex_to_image(formula)
-                if img is not None:
-                    st.image(img)
-                    continue
-            try:
-                st.latex(formula)
-            except Exception:
-                st.markdown(f"<div class='terminal-formula'>{escape(formula)}</div>", unsafe_allow_html=True)
+            st.latex(formula)
         st.markdown(
             f"""
                 <div class='terminal-result-box'>{escape(result_text)}</div>
@@ -385,8 +362,7 @@ render_terminal_box(
     'Standardabweichung des Blindwerts bestimmen',
     terminal1_content,
     [r'''s_{blank} = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}'''],
-    latex=True,
-    render_formula_as_image=True,
+    latex=True
 )
 
 render_terminal_box(
