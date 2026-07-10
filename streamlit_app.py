@@ -156,14 +156,15 @@ def process_data_frame(data_frame, source_name):
     terminal3_content = f"{source_name}: LOD: {lod_value:.6f}"
     terminal4_content = f"{source_name}: LOQ: {loq_value:.6f}"
 
-    return data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value
+    # Zusätzlich zurückgeben: verwendete Blank-Werte und Kalibrierpunkte sowie slope und blank_sd
+    return data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd
 
 
 if use_sample_csv:
     sample_path = Path(__file__).with_name('sample_lod_data.csv')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes))
-    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -177,7 +178,7 @@ elif use_sample_txt:
     sample_path = Path(__file__).with_name('sample_lod_data.txt')
     sample_bytes = sample_path.read_bytes()
     data_frame = pd.read_csv(BytesIO(sample_bytes), sep='\t')
-    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, sample_path.name)
+    data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd = process_data_frame(data_frame, sample_path.name)
     st.success(f'✓ Beispiel-Datei geladen: {sample_path.name}')
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
@@ -211,10 +212,15 @@ elif uploaded_file is not None:
                     data_frame = pd.read_csv(uploaded_file, sep='\t')
 
         try:
-            data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, uploaded_file.name)
+            data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd = process_data_frame(data_frame, uploaded_file.name)
 
             st.subheader('Vorschau der eingelesenen Daten')
             st.dataframe(data_frame, use_container_width=True)
+            with st.expander('Debug: Verwendete Werte anzeigen'):
+                st.write('Blank-Werte (used for SD):', blank_signals)
+                st.write('Kalibrierpunkte (concentration, signal):', calibration)
+                st.write('Steigung (slope):', slope)
+                st.write('Standardabweichung Blank (sd):', blank_sd)
         except ValueError as ve:
             # Spezifische Hilfe anbieten, wenn Spalten fehlen
             st.error(f'Fehler beim Einlesen der Datei: {ve}')
