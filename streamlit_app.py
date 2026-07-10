@@ -91,7 +91,33 @@ def process_data_frame(data_frame, source_name):
     if data_frame.empty:
         raise ValueError('Die Datei enthält keine Zeilen.')
 
-    data_frame.columns = [col.strip().lower() for col in data_frame.columns]
+    # Flexible Header-Mapping: akzeptiere gängige Varianten und normalisiere
+    def _normalize_col_name(c):
+        return str(c).strip().lower().replace(' ', '_')
+
+    synonyms = {
+        'measurement_type': ['measurement_type', 'measurement type', 'type', 'sample_type', 'sample type', 'measurementtype', 'group', 'category',
+                             'measurement_typ', 'measurementtype', 'messung', 'messwert', 'messungstyp', 'messwert_typ', 'messwert type'],
+        'concentration': ['concentration', 'conc', 'amount', 'value', 'concentration_mg_l', 'konzentration', 'konz', 'wert', 'mg_l'],
+        'signal': ['signal', 'response', 'intensity', 'signal_value', 'signal value', 'response_value', 'signal_raw', 'signalwert', 'signal_wert', 'antwort']
+    }
+
+    # Baue Mapping von normalisierten Namen zur originalen Spalte
+    original_cols = list(data_frame.columns)
+    norm_to_orig = { _normalize_col_name(c): c for c in original_cols }
+
+    rename_map = {}
+    for target, variants in synonyms.items():
+        for v in variants:
+            if _normalize_col_name(v) in norm_to_orig:
+                rename_map[norm_to_orig[_normalize_col_name(v)]] = target
+                break
+
+    if rename_map:
+        data_frame = data_frame.rename(columns=rename_map)
+
+    # Abschließend alle Spaltennamen normalisieren (lowercase, no spaces)
+    data_frame.columns = [_normalize_col_name(c) for c in data_frame.columns]
     expected_columns = {'measurement_type', 'concentration', 'signal'}
     missing_columns = expected_columns.difference(data_frame.columns)
     if missing_columns:
@@ -165,17 +191,47 @@ elif uploaded_file is not None:
     st.success(f'✓ {uploaded_file.name} ({file_type})')
 
     try:
-        if file_type == 'CSV':
+        # automatische Erkennung nach Dateiendung, fallback auf den ausgewählten Typ
+        fname = uploaded_file.name.lower() if hasattr(uploaded_file, 'name') else ''
+        if fname.endswith('.xlsx') or fname.endswith('.xls'):
+            # explizit openpyxl verwenden für xlsx
+            data_frame = pd.read_excel(uploaded_file, engine='openpyxl')
+        elif fname.endswith('.csv') or file_type == 'CSV':
             data_frame = pd.read_csv(uploaded_file)
-        elif file_type == 'XLSX':
-            data_frame = pd.read_excel(uploaded_file)
-        else:
+        elif fname.endswith('.txt') or file_type == 'TXT':
             data_frame = pd.read_csv(uploaded_file, sep='\t')
+        else:
+            # Versuch: zuerst Excel, dann CSV, dann Tab-getrennt
+            try:
+                data_frame = pd.read_excel(uploaded_file, engine='openpyxl')
+            except Exception:
+                try:
+                    data_frame = pd.read_csv(uploaded_file)
+                except Exception:
+                    data_frame = pd.read_csv(uploaded_file, sep='\t')
 
-        data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, uploaded_file.name)
+        try:
+            data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value = process_data_frame(data_frame, uploaded_file.name)
 
-        st.subheader('Vorschau der eingelesenen Daten')
-        st.dataframe(data_frame, use_container_width=True)
+            st.subheader('Vorschau der eingelesenen Daten')
+            st.dataframe(data_frame, use_container_width=True)
+        except ValueError as ve:
+            # Spezifische Hilfe anbieten, wenn Spalten fehlen
+            st.error(f'Fehler beim Einlesen der Datei: {ve}')
+            orig_cols = list(data_frame.columns)
+            def _normalize_col_name(c):
+                return str(c).strip().lower().replace(' ', '_')
+
+            normalized = [_normalize_col_name(c) for c in orig_cols]
+            st.info('Erkannte Spaltennamen (original → normalisiert):')
+            st.write({orig: norm for orig, norm in zip(orig_cols, normalized)})
+            st.warning('Tipp: Benenne die Kopfzeile um oder verwende eine der erkannten Varianten. Beispiel-Header: measurement_type, concentration, signal')
+            terminal1_content = 'Fehler: Bitte prüfen Sie das Format.'
+            terminal2_content = 'Fehler: Bitte prüfen Sie das Format.'
+            terminal3_content = 'Fehler: Bitte prüfen Sie das Format.'
+            terminal4_content = 'Fehler: Bitte prüfen Sie das Format.'
+            lod_value = None
+            loq_value = None
         st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
         st.session_state.last_result = data_frame
         st.session_state.last_source = uploaded_file.name
@@ -183,7 +239,9 @@ elif uploaded_file is not None:
         st.session_state.last_lod_value = lod_value
         st.session_state.last_loq_value = loq_value
     except Exception as exc:
+        # Deutlicherer Fehlerhinweis: häufiges Problem ist falscher Dateityp/Encoding
         st.error(f'Fehler beim Einlesen der Datei: {exc}')
+        st.warning('Hinweis: Wählen Sie bei einer echten Excel-Datei (.xlsx/.xls) "XLSX" oder laden Sie eine korrekt formatierte CSV/ TXT-Datei.')
         terminal1_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal2_content = 'Fehler: Bitte prüfen Sie das Format.'
         terminal3_content = 'Fehler: Bitte prüfen Sie das Format.'
