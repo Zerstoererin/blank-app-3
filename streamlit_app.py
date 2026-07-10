@@ -33,6 +33,12 @@ with col1:
     )
 
 with col2:
+    sd_method = st.selectbox(
+        'Standardabweichung berechnen mit',
+        ['Stichprobe (n-1)', 'Population (n)']
+    )
+
+with col2:
     uploaded_file = st.file_uploader(
         'Datei hochladen',
         type=['csv', 'xlsx', 'txt']
@@ -87,7 +93,7 @@ def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
         )
 
 
-def process_data_frame(data_frame, source_name):
+def process_data_frame(data_frame, source_name, ddof=1):
     if data_frame.empty:
         raise ValueError('Die Datei enthält keine Zeilen.')
 
@@ -130,10 +136,10 @@ def process_data_frame(data_frame, source_name):
 
     records = data_frame.to_dict(orient='records')
     blank_signals, calibration = prepare_measurement_data(records)
-    lod_value = calculate_lod(blank_signals, calibration)
+    lod_value = calculate_lod(blank_signals, calibration, ddof=ddof)
 
     blank_mean = sum(blank_signals) / len(blank_signals)
-    blank_sd = pd.Series(blank_signals).std(ddof=1) if len(blank_signals) > 1 else 0.0
+    blank_sd = pd.Series(blank_signals).std(ddof=ddof) if len(blank_signals) > 1 else 0.0
 
     x_values = [x for x, _ in calibration]
     y_values = [y for _, y in calibration]
@@ -217,7 +223,8 @@ elif uploaded_file is not None:
                     data_frame = pd.read_csv(uploaded_file, sep='\t')
 
         try:
-            data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd = process_data_frame(data_frame, uploaded_file.name)
+            ddof = 1 if sd_method == 'Stichprobe (n-1)' else 0
+            data_frame, terminal1_content, terminal2_content, terminal3_content, terminal4_content, lod_value, loq_value, blank_signals, calibration, slope, blank_sd = process_data_frame(data_frame, uploaded_file.name, ddof=ddof)
 
             st.subheader('Vorschau der eingelesenen Daten')
             st.dataframe(data_frame, use_container_width=True)

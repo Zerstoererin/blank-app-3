@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from statistics import mean, stdev
+from statistics import mean, pstdev, stdev
 from typing import Iterable, List, Sequence, Tuple
 
 
@@ -35,9 +35,14 @@ def prepare_measurement_data(records: Sequence[dict]) -> Tuple[List[float], List
             blank_field = cand
             break
 
-    # Wenn eine Blank-Spalte vorhanden ist, nutze deren Werte als Blindsignale
+    # Wenn eine Blank-Spalte vorhanden ist, nutze deren Werte nur für Zeilen mit measurement_type == 'blank'
     if blank_field:
+        has_measurement_type = 'measurement_type' in keys
         for record in records:
+            if has_measurement_type:
+                measurement_type = str(record.get("measurement_type", "")).strip().lower()
+                if measurement_type != "blank":
+                    continue
             val = _to_float(record.get(blank_field))
             if val is not None:
                 blank_signals.append(val)
@@ -65,7 +70,7 @@ def prepare_measurement_data(records: Sequence[dict]) -> Tuple[List[float], List
     return blank_signals, calibration
 
 
-def calculate_lod(blank_signals: Sequence[float], calibration: Sequence[Tuple[float, float]]) -> float:
+def calculate_lod(blank_signals: Sequence[float], calibration: Sequence[Tuple[float, float]], ddof: int = 1) -> float:
     if len(blank_signals) < 2:
         raise ValueError("Mindestens zwei Blindwerte werden benötigt.")
     if len(calibration) < 2:
@@ -75,7 +80,7 @@ def calculate_lod(blank_signals: Sequence[float], calibration: Sequence[Tuple[fl
     if slope == 0:
         raise ValueError("Die Kalibriergerade hat eine Steigung von 0.")
 
-    blank_sd = stdev(blank_signals)
+    blank_sd = stdev(blank_signals) if ddof == 1 else pstdev(blank_signals) if ddof == 1 else pstdev(blank_signals)
     return 3.3 * blank_sd / slope
 
 
