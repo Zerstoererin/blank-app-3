@@ -221,7 +221,7 @@ elif uploaded_file is not None:
 
             st.subheader('Vorschau der eingelesenen Daten')
             st.dataframe(data_frame, use_container_width=True)
-            with st.expander('Debug: Verwendete Werte anzeigen'):
+            with st.expander('Debug: Verwendete Werte anzeigen', expanded=True):
                 st.write('Blank-Werte (used for SD):', blank_signals)
                 st.write('Kalibrierpunkte (concentration, signal):', calibration)
                 st.write('Steigung (slope):', slope)
