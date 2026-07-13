@@ -192,11 +192,6 @@ if use_sample_csv:
     st.subheader('Vorschau der eingelesenen Daten')
     st.dataframe(data_frame, use_container_width=True)
     st.caption('Erkannte Blindwerte und Kalibrierpunkte werden aus den Spalten measurement_type, concentration und signal berechnet.')
-    with st.expander('Debug: Verwendete Werte anzeigen', expanded=True):
-        st.write('Blank-Werte (used for SD):', blank_signals)
-        st.write('Kalibrierpunkte (concentration, signal):', calibration)
-        st.write('Steigung (slope):', slope)
-        st.write('Standardabweichung Blank (sd):', blank_sd)
     st.session_state.last_result = data_frame
     st.session_state.last_source = sample_path.name
     st.session_state.last_preview = data_frame.copy()
@@ -245,11 +240,6 @@ elif uploaded_file is not None:
 
             st.subheader('Vorschau der eingelesenen Daten')
             st.dataframe(data_frame, use_container_width=True)
-            with st.expander('Debug: Verwendete Werte anzeigen', expanded=True):
-                st.write('Blank-Werte (used for SD):', blank_signals)
-                st.write('Kalibrierpunkte (concentration, signal):', calibration)
-                st.write('Steigung (slope):', slope)
-                st.write('Standardabweichung Blank (sd):', blank_sd)
         except ValueError as ve:
             # Spezifische Hilfe anbieten, wenn Spalten fehlen
             st.error(f'Fehler beim Einlesen der Datei: {ve}')
