@@ -33,9 +33,21 @@ with col1:
     )
 
 with col2:
+    st.markdown(
+        """
+        <div style="display:flex; align-items:center; gap:0.35rem; margin-bottom:0.3rem;">
+            <span style="font-weight:600;">Standardabweichung berechnen mit</span>
+            <span class="tooltip-container">★
+                <span class="tooltip-text">• <b>Stichprobe (n-1)</b>: passend, wenn die gemessenen Blindwerte nur eine Stichprobe aus einer größeren Gruppe sind. Das ist in der Praxis meist die Standardwahl.<br>• <b>Population (n)</b>: passend, wenn du die vorhandenen Blindwerte als die komplette Grundgesamtheit betrachtest.</span>
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
     sd_method = st.selectbox(
-        'Standardabweichung berechnen mit',
-        ['Stichprobe (n-1)', 'Population (n)']
+        '',
+        ['Stichprobe (n-1)', 'Population (n)'],
+        label_visibility='collapsed'
     )
 
 with col2:
