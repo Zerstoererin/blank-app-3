@@ -323,9 +323,12 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
 }
 
 .terminal-blue {
-    background-color: #d0d0d0; /* Even darker light gray */
-    border: 2px solid #808080; /* Dark gray */
+    background-color: transparent;
+    border: none;
     color: #333;
+    padding: 0 0 0.5rem 0;
+    margin-bottom: 0.75rem;
+    min-height: auto;
 }
 
 .tooltip-container {
