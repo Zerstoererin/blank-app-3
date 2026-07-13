@@ -416,6 +416,21 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
     font-size: 2.6rem;
     font-weight: bold;
     color: #111;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.08em;
+    min-height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lod-display-value.is-animating {
+    animation: slot-pulse 0.12s ease-in-out infinite alternate;
+}
+
+@keyframes slot-pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.02); }
 }
 
 /* Button-Text für file_uploader */
@@ -435,6 +450,49 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.textContent = 'Data';
         }
     });
+});
+</script>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<script>
+function animateResultValue(element) {
+    if (!element || element.dataset.animated === 'true') return;
+    const finalValue = element.getAttribute('data-final-value');
+    if (!finalValue || finalValue === '—') return;
+
+    element.dataset.animated = 'true';
+    element.classList.add('is-animating');
+
+    const target = parseFloat(finalValue);
+    const targetText = target.toFixed(6);
+    let frame = 0;
+    const totalFrames = 16;
+
+    const interval = window.setInterval(() => {
+        frame += 1;
+        const randomDigits = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('');
+        const randomText = `${randomDigits.slice(0, 3)}.${randomDigits.slice(3, 9)}`;
+        element.textContent = randomText;
+
+        if (frame >= totalFrames) {
+            window.clearInterval(interval);
+            element.textContent = targetText;
+            element.classList.remove('is-animating');
+        }
+    }, 60);
+}
+
+function runResultAnimations() {
+    document.querySelectorAll('.lod-display-value[data-final-value]').forEach(animateResultValue);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(runResultAnimations, 250);
+});
+
+window.addEventListener('load', function() {
+    setTimeout(runResultAnimations, 250);
 });
 </script>
 """, unsafe_allow_html=True)
@@ -493,6 +551,9 @@ render_terminal_box(
 lod_display_value = f"{lod_value:.6f}" if lod_value is not None else '—'
 loq_display_value = f"{loq_value:.6f}" if loq_value is not None else '—'
 
+lod_display_attr = f"{lod_value:.6f}" if lod_value is not None else '—'
+loq_display_attr = f"{loq_value:.6f}" if loq_value is not None else '—'
+
 final_col1, final_col2 = st.columns([1, 1])
 
 with final_col1:
@@ -500,7 +561,7 @@ with final_col1:
         f"""
         <div class='lod-display'>
             <div class='lod-display-title'>Der LOD beträgt:</div>
-            <div class='lod-display-value'>{lod_display_value}</div>
+            <div id='lod-result' class='lod-display-value' data-final-value='{lod_display_attr}'>{lod_display_value}</div>
         </div>
         """,
         unsafe_allow_html=True,
@@ -511,7 +572,7 @@ with final_col2:
         f"""
         <div class='lod-display'>
             <div class='lod-display-title'>Der LOQ beträgt:</div>
-            <div class='lod-display-value'>{loq_display_value}</div>
+            <div id='loq-result' class='lod-display-value' data-final-value='{loq_display_attr}'>{loq_display_value}</div>
         </div>
         """,
         unsafe_allow_html=True,
