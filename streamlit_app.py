@@ -70,12 +70,17 @@ if clear_results:
     st.session_state.pop('last_loq_value', None)
 
 
-def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
+def render_terminal_box(box_class, heading, result_text, formulas, latex=False, tooltip_text=None):
+    heading_html = escape(heading)
+    if tooltip_text:
+        tooltip_html = escape(tooltip_text).replace('\n', '<br>')
+        heading_html = f"{heading_html} <span class='tooltip-container'>★<span class='tooltip-text'>{tooltip_html}</span></span>"
+
     if latex:
         st.markdown(
             f"""
             <div class='terminal-box {box_class}'>
-                <div class='terminal-heading'>{escape(heading)}</div>
+                <div class='terminal-heading'>{heading_html}</div>
             """,
             unsafe_allow_html=True,
         )
@@ -96,7 +101,7 @@ def render_terminal_box(box_class, heading, result_text, formulas, latex=False):
         st.markdown(
             f"""
             <div class='terminal-box {box_class}'>
-                <div class='terminal-heading'>{escape(heading)}</div>
+                <div class='terminal-heading'>{heading_html}</div>
                 {formula_markup}
                 <div class='terminal-result-box'>{escape(result_text)}</div>
             </div>
@@ -449,7 +454,8 @@ render_terminal_box(
     'Standardabweichung des Blindwerts bestimmen',
     terminal1_content,
     [r'''\sigma = \sqrt{\frac{\sum_{i=1}^{n}(x_i - \bar{x})^2}{n - 1}}'''],
-    latex=True
+    latex=True,
+    tooltip_text='Die Streuung der Messsignale von Mehrfachmessungen eines Blindwerts (matrixfreie Probe / Lösemittel / etc.). Wird zur Berechnung von LOD und LOQ verwendet und gibt Aufschluss über das Hintergrundrauschen des Messsystems.'
 )
 
 render_terminal_box(
@@ -472,6 +478,7 @@ render_terminal_box(
         r'''c = \bar{y} - m\bar{x}'''
     ],
     latex=True,
+    tooltip_text='Eine lineare oder nichtlineare Funktion, die den Zusammenhang zwischen der Konzentration eines Analyten (x) und dem Messsignal (y) beschreibt. Ermöglicht die Umrechnung von Messsignalen in Konzentrationen und wird durch Messung von Kalibrierstandards mit bekannten Konzentrationen erstellt.'
 )
 
 render_terminal_box(
@@ -480,6 +487,7 @@ render_terminal_box(
     terminal4_content,
     [r'''LOQ = \frac{10\,\sigma}{S}'''],
     latex=True,
+    tooltip_text='Limit of Quantification, Bestimmungsgrenze\nDie kleinste Konzentration, bei der ein Analyt mit Präzision (meist ≤10–20% Standardabweichung) quantifiziert werden kann, definiert die untere Grenze für quantitative Aussagen (im Gegensatz zur bloßen Detektion).'
 )
 
 render_terminal_box(
@@ -488,6 +496,7 @@ render_terminal_box(
     terminal3_content,
     [r'''LOD = \frac{3\,\sigma}{S}'''],
     latex=True,
+    tooltip_text='Die kleinste messbare Konzentration eines Analyten, die mit einer vorgegebenen Signifikanz (meist 95–99%) vom Blindwert unterschieden werden kann. Gibt an, ab welcher Konzentration ein Signal statistisch sicher vom Hintergrundrauschen unterscheidbar ist.'
 )
 
 
