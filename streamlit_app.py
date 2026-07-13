@@ -305,20 +305,21 @@ body, div, section, span, p, label, button, input, select, textarea, h1, h2, h3,
 }
 
 .terminal-pink {
-    background-color: #f0f0f0; /* Light gray */
-    border: 2px solid #a0a0a0; /* Gray */
+    background-color: transparent;
+    border: none;
     color: #333;
+    padding: 0 0 0.5rem 0;
+    margin-bottom: 0.75rem;
+    min-height: auto;
 }
 
 .terminal-lilac {
-    background-color: #e0e0e0; /* Slightly darker light gray */
-    border: 2px solid #909090; /* Darker gray */
+    background-color: transparent;
+    border: none;
     color: #333;
-}
-
-     background-color: #f0f0f0; /* Light gray - match other terminals */
-     border: 2px solid #a0a0a0; /* Gray border */
-     color: #333;
+    padding: 0 0 0.5rem 0;
+    margin-bottom: 0.75rem;
+    min-height: auto;
 }
 
 .terminal-blue {
